@@ -1,0 +1,92 @@
+<?php
+/**
+ * @file
+ * A module to make the Add Another Item text more specific and helpful.
+ * Code from http://drupal.org/node/536842
+ * modified for entitie registrations Ruth Ivimey-Cook
+ */
+
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function fields_tweak_button_form_alter(&$form, &$form_state, $form_id) {
+  // Alter the node edit form.
+  // Note that $form['type']['#value'] contains the node type, so you may want
+  // to filter by that as well.
+  $enabled = FALSE;
+
+  // check for ordinary node forms
+  if (isset($form['#node']) && isset($form['type']['#value']) && $form_id == $form['type']['#value'] .'_node_form') {
+    if (!isset($form['#after_build'])) {
+      $enabled = TRUE;
+    }
+  }
+
+  // check for entity registration form
+  if (isset($form['#entity_type'])) {
+    if ($form['#entity_type'] == 'registration' ){
+      if (!isset($form['#after_build'])) {
+        $enabeld = TRUE;
+      }
+    }
+  }
+
+  if ($enabled) {
+    $form['#after_build'] = array();
+    $form['#after_build'][] = '_fields_tweak_button_node_form_after_build';
+  }
+}
+
+/**
+ * After build callback for our node form.
+ */
+function _fields_tweak_button_node_form_after_build($form, &$form_state) {
+  _fields_tweak_button_node_form_after_build_recursive($form);
+  return $form;
+}
+
+/**
+ * Scan the node form recursively in search for "Add more items" buttons.
+ */
+function _fields_tweak_button_node_form_after_build_recursive(&$elements) {
+  
+  // Want to use custom text in your button? 
+  // Set that below with the key item on the left set to the name of the field
+  $name1 = variable_get('fields_tweak_button_name', '');
+  if (empty($name1)) return;
+
+  $value1 = variable_get('fields_tweak_button_value', '');
+
+  $replacements = array(
+    //eg: 'field_children_add_more' => 'Add another child',
+    $name1, $value1
+  );    
+
+  foreach (element_children($elements) as $key) {
+    //dsm("Examining ".$key);
+
+    if (isset($elements[$key]) && $elements[$key]) {
+      if (isset($elements['add_more'])) {
+        
+        $addmore = $elements['add_more'];
+
+        if (array_key_exists($addmore['#name'],$replacements)) { 
+
+          $match = $addmore['#name'];
+          // If we've set a specific override use that.
+          $elements['add_more']['#value'] = t($replacements[$match]); 
+
+          //dsm("Found in ");
+          //dsm($elements['add_more']);
+        }
+
+      }
+      else {
+        // Recurse through all children elements.
+        _fields_tweak_button_node_form_after_build_recursive($elements[$key]);
+      }
+    }
+  }
+}
+

@@ -1,0 +1,7 @@
+name = Fields Tweak Button Text
+description = Make the Add Another Item text which appears in a Field Collection more helpful.
+package = Fields
+
+version = "7.x-1.x-dev"
+core = 7.x
+project = "fields_tweak_button"
